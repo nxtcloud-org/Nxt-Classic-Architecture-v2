@@ -3,11 +3,13 @@ import boto3
 import pymysql
 import os
 
+from botocore.exceptions import ClientError
+
 
 def lambda_handler(event, context):
     print("EC2 -> Lambda로 전달된 데이터", event["body"])
 
-    # Bedrock 클라이언트 초기화 - 버지니아 북부 리전으로 설정
+    # Bedrock 클라이언트 초기화
     bedrock = boto3.client(service_name="bedrock-runtime", region_name="us-east-1")
 
     try:
@@ -24,39 +26,30 @@ def lambda_handler(event, context):
     note_id = input_data["noteId"]
     print(
         "ai한테 보낼 유저 메시지 내용",
-        input_data["content"],
-        type(input_data["content"]),
+        user_message,
+        type(user_message),
     )
 
     try:
-        # Bedrock API 호출을 위한 요청 본문 구성
-        request_body = {
-            "anthropic_version": "bedrock-2023-05-31",
-            "max_tokens": 1000,
-            "messages": [
-                {
-                    "role": "user",
-                    "content": [
-                        {
-                            "type": "text",
-                            "text": "You are an expert in AWS. Based on the following data, suggest one AWS service that the user can additionally learn. Ensure the response is at least three sentences long and in Korean.",
-                        },
-                        {"type": "text", "text": user_message},
-                    ],
-                }
-            ],
-        }
+        # 1. 모델 ID 설정
+        model_id = "amazon.nova-lite-v1:0"
 
-        # Bedrock 모델 호출
-        response = bedrock.invoke_model(
-            modelId="anthropic.claude-3-5-sonnet-20240620-v1:0",
-            body=json.dumps(request_body),
-            contentType="application/json",
-            accept="application/json",
+        # 2. converse API에 맞는 메시지 형식 구성
+        # 시스템 프롬프트(역할 부여)와 사용자 메시지를 분리합니다.
+        system_prompt = "You are an expert in AWS. Based on the following data, suggest one AWS service that the user can additionally learn. Ensure the response is at least three sentences long and in Korean."
+
+        messages = [{"role": "user", "content": [{"text": user_message}]}]
+
+        # 3. converse API 호출
+        response = bedrock.converse(
+            modelId=model_id,
+            messages=messages,
+            system=[{"text": system_prompt}],  # 시스템 프롬프트 전달
+            inferenceConfig={"maxTokens": 1000, "temperature": 0.7},
         )
 
-        response_body = json.loads(response.get("body").read())
-        ai_response = response_body.get("content")[0].get("text")
+        # 4. converse API의 응답 형식에 맞게 결과 파싱
+        ai_response = response["output"]["message"]["content"][0]["text"]
 
         print("ai 한테 받아왔어?", ai_response)
 
@@ -71,15 +64,15 @@ def lambda_handler(event, context):
 
         try:
             with db.cursor() as cursor:
-                # AI 응답 저장 - id 기반으로 수정
+                # AI 응답 저장
                 sql = "UPDATE notes SET ai_note = %s, ai_type = %s WHERE id = %s"
-                cursor.execute(sql, (ai_response, "claude", note_id))
+                cursor.execute(sql, (ai_response, "nova", note_id))
                 db.commit()
         finally:
             db.close()
 
         return ai_response
 
-    except Exception as e:
-        print("Error:", str(e))
+    except (ClientError, Exception) as e:
+        print(f"Error: {e}")
         raise Exception("Lambda function error")

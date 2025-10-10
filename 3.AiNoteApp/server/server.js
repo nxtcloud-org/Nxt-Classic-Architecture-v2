@@ -22,7 +22,7 @@ const configureGemini = () => {
     return null;
   }
   const genAI = new GoogleGenerativeAI(geminiKey);
-  return genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+  return genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 };
 
 // 데이터베이스 연결 함수

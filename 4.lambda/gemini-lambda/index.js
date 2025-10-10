@@ -5,7 +5,7 @@ exports.handler = async (event) => {
     console.log("EC2 -> Lambda로 전달된 데이터", event.body)
     // 환경 변수에서 Gemini API 키와 데이터베이스 연결 정보를 불러옵니다.
     const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
     
     let inputData;
     try {

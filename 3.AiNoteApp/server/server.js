@@ -1,6 +1,6 @@
 require("dotenv").config();
 const express = require("express");
-const mysql = require("mysql");
+const mysql = require("mysql2");
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 const cors = require("cors");
 
@@ -30,7 +30,7 @@ const connectToDatabase = () => {
   try {
     const requiredEnvVars = ["DB_HOST", "DB_USER", "DB_PASSWORD", "DB_NAME"];
     const missingEnvVars = requiredEnvVars.filter(
-      (envVar) => !process.env[envVar]
+      (envVar) => !process.env[envVar],
     );
 
     if (missingEnvVars.length > 0) {
@@ -152,10 +152,10 @@ app.post("/notes", checkDbConnection, checkGeminiConfig, async (req, res) => {
     const response = await result.response;
     const aiNote = response.text();
 
-    const note = { 
-      user_note: userMessage, 
+    const note = {
+      user_note: userMessage,
       ai_note: aiNote,
-      ai_type: 'gemini'
+      ai_type: "gemini",
     };
 
     const sql = "INSERT INTO notes SET ?";

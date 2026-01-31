@@ -1,6 +1,6 @@
 require("dotenv").config();
 const express = require("express");
-const mysql = require("mysql");
+const mysql = require("mysql2");
 const axios = require("axios");
 const cors = require("cors");
 
@@ -20,13 +20,13 @@ const connectToDatabase = () => {
     // Lambda URL을 제외한 필수 DB 환경변수만 체크
     const requiredEnvVars = ["DB_HOST", "DB_USER", "DB_PASSWORD", "DB_NAME"];
     const missingEnvVars = requiredEnvVars.filter(
-      (envVar) => !process.env[envVar]
+      (envVar) => !process.env[envVar],
     );
 
     if (missingEnvVars.length > 0) {
       console.error(
         "필수 데이터베이스 환경변수가 없습니다:",
-        missingEnvVars.join(", ")
+        missingEnvVars.join(", "),
       );
       return null;
     }
@@ -327,16 +327,16 @@ const startServer = async () => {
       console.log(
         `Gemini Lambda URL: ${
           process.env.GEMINI_LAMBDA_URL ? "설정됨 ✅" : "설정 안됨 ⚠️"
-        }`
+        }`,
       );
       console.log(
         `Nova Lambda URL: ${
           process.env.BEDROCK_LAMBDA_URL ? "설정됨 ✅" : "설정 안됨 ⚠️"
-        }`
+        }`,
       );
       if (!process.env.GEMINI_LAMBDA_URL || !process.env.BEDROCK_LAMBDA_URL) {
         console.log(
-          "※ Lambda URL이 설정되지 않은 AI 기능은 사용할 수 없습니다."
+          "※ Lambda URL이 설정되지 않은 AI 기능은 사용할 수 없습니다.",
         );
       }
       console.log("=================\n");

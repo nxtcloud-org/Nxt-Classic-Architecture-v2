@@ -1,145 +1,186 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta charset="UTF-8">
-  <title>박스 피하기 게임 ver 1</title>
-  <style>
-    * { box-sizing: border-box; }
-    body {
-      margin: 0;
-      background: #111;
-      color: white;
-      font-family: Arial, sans-serif;
-      text-align: center;
-    }
-    #game {
-      position: relative;
-      width: 400px;
-      height: 600px;
-      margin: 30px auto;
-      border: 2px solid white;
-      background: #222;
-      overflow: hidden;
-    }
-    #player {
-      position: absolute;
-      bottom: 10px;
-      width: 30px;
-      height: 30px;
-      background: #4caf50;
-      left: 0;
-    }
-    .box {
-      position: absolute;
-      width: 40px;
-      height: 40px;
-      background: #f44336;
-      top: 0;
-    }
-    #info {
-      margin-top: 10px;
-      font-size: 18px;
-    }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>박스 피하기 게임</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #111; display: flex; justify-content: center; align-items: center; height: 100vh; font-family: monospace; }
+  canvas { border: 2px solid #444; background: #1a1a2e; }
+  #ui { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; color: #fff; }
+  #ui h1 { font-size: 32px; margin-bottom: 16px; }
+  #ui p { font-size: 16px; margin-bottom: 8px; color: #aaa; }
+  #ui button { padding: 12px 32px; font-size: 18px; background: #e94560; color: #fff; border: none; cursor: pointer; font-family: monospace; margin-top: 12px; }
+  #ui button:hover { background: #ff6b81; }
+  #score { position: absolute; top: 20px; left: 50%; transform: translateX(-50%); color: #fff; font-size: 24px; font-family: monospace; }
+</style>
 </head>
 <body>
-  <h1>박스 피하기 게임 ver 1</h1>
-  <div id="game">
-    <div id="player"></div>
-  </div>
-  <div id="info">
-    ⏱️ 시간: <span id="time">0</span>초 | 🧮 점수: <span id="score">0</span>
-  </div>
 
-  <script>
-    const game = document.getElementById("game");
-    const player = document.getElementById("player");
-    const timeEl = document.getElementById("time");
-    const scoreEl = document.getElementById("score");
+<div id="score" style="display:none">점수: <span id="scoreValue">0</span></div>
+<canvas id="game"></canvas>
 
-    let playerX = (game.clientWidth - player.offsetWidth) / 2;
-    player.style.left = playerX + "px";
+<div id="ui">
+  <h1>박스 피하기</h1>
+  <p>← → 방향키 또는 마우스로 이동</p>
+  <p>떨어지는 박스를 피하세요!</p>
+  <button onclick="startGame()">시작</button>
+</div>
 
-    let moveLeft = false;
-    let moveRight = false;
-    let time = 0;
-    let score = 0;
-    let gameOver = false;
+<script>
+// ===== 설정 (자유롭게 수정하세요!) =====
+const CONFIG = {
+  canvasWidth: 400,
+  canvasHeight: 600,
 
-    document.addEventListener("keydown", (e) => {
-      if (e.key === "ArrowLeft") moveLeft = true;
-      if (e.key === "ArrowRight") moveRight = true;
-    });
+  // 플레이어
+  playerWidth: 40,
+  playerHeight: 40,
+  playerColor: '#00d2ff',
+  playerSpeed: 6,
 
-    document.addEventListener("keyup", (e) => {
-      if (e.key === "ArrowLeft") moveLeft = false;
-      if (e.key === "ArrowRight") moveRight = false;
-    });
+  // 장애물
+  boxWidth: 40,
+  boxHeight: 40,
+  boxColor: '#e94560',
+  boxSpeed: 3,          // 낙하 속도
+  boxSpawnRate: 60,     // 프레임 간격 (작을수록 자주 생성)
+};
+// ========================================
 
-    function movePlayer() {
-      if (moveLeft) playerX -= 5;
-      if (moveRight) playerX += 5;
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+canvas.width = CONFIG.canvasWidth;
+canvas.height = CONFIG.canvasHeight;
 
-      const maxX = game.clientWidth - player.offsetWidth;
-      playerX = Math.max(0, Math.min(maxX, playerX));
-      player.style.left = playerX + "px";
+const ui = document.getElementById('ui');
+const scoreDiv = document.getElementById('score');
+const scoreValue = document.getElementById('scoreValue');
+
+let player, boxes, score, gameOver, frameCount;
+let keys = {};
+
+// 플레이어 객체
+function createPlayer() {
+  return {
+    x: canvas.width / 2 - CONFIG.playerWidth / 2,
+    y: canvas.height - CONFIG.playerHeight - 20,
+    w: CONFIG.playerWidth,
+    h: CONFIG.playerHeight,
+  };
+}
+
+// 장애물 생성
+function spawnBox() {
+  const x = Math.random() * (canvas.width - CONFIG.boxWidth);
+  boxes.push({ x, y: -CONFIG.boxHeight, w: CONFIG.boxWidth, h: CONFIG.boxHeight });
+}
+
+// 충돌 감지
+function isColliding(a, b) {
+  return a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
+}
+
+// 게임 루프
+function update() {
+  if (gameOver) return;
+
+  frameCount++;
+
+  // 플레이어 이동
+  if (keys['ArrowLeft'])  player.x -= CONFIG.playerSpeed;
+  if (keys['ArrowRight']) player.x += CONFIG.playerSpeed;
+
+  // 벽 제한
+  if (player.x < 0) player.x = 0;
+  if (player.x + player.w > canvas.width) player.x = canvas.width - player.w;
+
+  // 장애물 생성
+  if (frameCount % CONFIG.boxSpawnRate === 0) spawnBox();
+
+  // 장애물 이동 & 충돌
+  for (let i = boxes.length - 1; i >= 0; i--) {
+    boxes[i].y += CONFIG.boxSpeed;
+
+    if (isColliding(player, boxes[i])) {
+      gameOver = true;
+      endGame();
+      return;
     }
 
-    setInterval(() => {
-      if (!gameOver) movePlayer();
-    }, 16);
-
-    function createBox() {
-      const box = document.createElement("div");
-      box.classList.add("box");
-      box.style.left = Math.floor(Math.random() * (game.clientWidth - 40)) + "px";
-      game.appendChild(box);
-
-      let boxY = 0;
-      const fall = setInterval(() => {
-        if (gameOver) {
-          clearInterval(fall);
-          box.remove();
-          return;
-        }
-
-        boxY += 2; // 고정 속도
-        box.style.top = boxY + "px";
-
-        const boxRect = box.getBoundingClientRect();
-        const playerRect = player.getBoundingClientRect();
-
-        if (
-          boxRect.bottom >= playerRect.top &&
-          boxRect.top <= playerRect.bottom &&
-          boxRect.left < playerRect.right &&
-          boxRect.right > playerRect.left
-        ) {
-          alert("💥 게임 오버! 점수: " + score);
-          gameOver = true;
-          location.reload();
-        }
-
-        if (boxY > 600) {
-          box.remove();
-          clearInterval(fall);
-        }
-      }, 20);
+    // 화면 밖으로 나가면 제거 + 점수
+    if (boxes[i].y > canvas.height) {
+      boxes.splice(i, 1);
+      score++;
     }
+  }
 
-    // 시간 & 점수
-    setInterval(() => {
-      if (gameOver) return;
-      time++;
-      score += 10;
-      timeEl.textContent = time;
-      scoreEl.textContent = score;
-    }, 1000);
+  scoreValue.textContent = score;
+}
 
-    // 박스 생성
-    setInterval(() => {
-      if (!gameOver) createBox();
-    }, 1000);
-  </script>
+function draw() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  // 플레이어
+  ctx.fillStyle = CONFIG.playerColor;
+  ctx.fillRect(player.x, player.y, player.w, player.h);
+
+  // 장애물
+  ctx.fillStyle = CONFIG.boxColor;
+  for (const box of boxes) {
+    ctx.fillRect(box.x, box.y, box.w, box.h);
+  }
+}
+
+function gameLoop() {
+  update();
+  draw();
+  if (!gameOver) requestAnimationFrame(gameLoop);
+}
+
+function startGame() {
+  player = createPlayer();
+  boxes = [];
+  score = 0;
+  gameOver = false;
+  frameCount = 0;
+
+  ui.style.display = 'none';
+  scoreDiv.style.display = 'block';
+  scoreValue.textContent = '0';
+
+  gameLoop();
+}
+
+function endGame() {
+  ui.innerHTML = `
+    <h1>게임 오버</h1>
+    <p>점수: ${score}</p>
+    <button onclick="startGame()">다시 하기</button>
+  `;
+  ui.style.display = 'block';
+  scoreDiv.style.display = 'none';
+}
+
+// 키보드 입력
+document.addEventListener('keydown', (e) => { keys[e.key] = true; });
+document.addEventListener('keyup', (e) => { keys[e.key] = false; });
+
+// 마우스/터치 입력
+canvas.addEventListener('mousemove', (e) => {
+  if (gameOver) return;
+  const rect = canvas.getBoundingClientRect();
+  player.x = e.clientX - rect.left - player.w / 2;
+});
+
+canvas.addEventListener('touchmove', (e) => {
+  if (gameOver) return;
+  e.preventDefault();
+  const rect = canvas.getBoundingClientRect();
+  player.x = e.touches[0].clientX - rect.left - player.w / 2;
+}, { passive: false });
+</script>
+
 </body>
 </html>

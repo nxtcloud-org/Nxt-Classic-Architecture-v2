@@ -1,27 +1,5 @@
 import { useState } from 'react';
 
-/* ───── 순수 CSS 바 차트 컴포넌트 ───── */
-function HorizontalBar({ data, maxValue }) {
-  return (
-    <div className="space-y-3">
-      {data.map(({ label, value, color }) => (
-        <div key={label}>
-          <div className="flex justify-between text-sm font-body mb-1">
-            <span>{label}</span>
-            <span className="text-muted">{value}%</span>
-          </div>
-          <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
-            <div
-              className={`h-full rounded-full transition-all duration-700 ${color}`}
-              style={{ width: `${(value / maxValue) * 100}%` }}
-            />
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-}
-
 /* ───── 타임라인 도트 컴포넌트 ───── */
 function TimelineDot({ active }) {
   return (
@@ -97,13 +75,58 @@ const timeline = [
   { date: '2023.11', event: 'UK AI Safety Summit (블레츨리 선언)', region: 'INTL', active: false },
 ];
 
-const competencies = [
-  { label: '법/규제 분석', value: 90, color: 'bg-ink' },
-  { label: '정책 설계', value: 85, color: 'bg-ink' },
-  { label: '국제 비교법', value: 80, color: 'bg-accent' },
-  { label: 'AI 기술 이해', value: 75, color: 'bg-accent' },
-  { label: '이해관계자 분석', value: 70, color: 'bg-gray-500' },
-  { label: '정량 연구방법', value: 65, color: 'bg-gray-500' },
+const ongoingResearch = [
+  {
+    title: 'EU AI Act 이행 모니터링 프레임워크 설계',
+    status: '진행 중',
+    period: '2025.03 -',
+    desc: 'EU AI Act 시행 이후 회원국별 이행 현황을 체계���으로 추적하는 비교 분석 프레임워크를 설계하고, 한국 AI 기본법 시행 대비 시사점을 도출합니다.',
+  },
+  {
+    title: '공공부문 알고리즘 영향평가 시범 적용',
+    status: '데이터 ��집',
+    period: '2024.09 -',
+    desc: '서울시 AI 기반 복지 서비스 3건을 대상으로 알고리즘 영향평가 시범 적용을 수���하고, 평가 도구의 실효성을 검증합니다.',
+  },
+  {
+    title: 'AI 생성물 저작권 판례 데이터베이스 구축',
+    status: '분석 단계',
+    period: '2024.06 -',
+    desc: '미국, EU, 중국, 일본, 한국의 AI 저작권 관련 판례 및 행정결정을 수집하여 비교법적 분석 데이터베이스를 구축합니다.',
+  },
+];
+
+const presentations = [
+  {
+    title: 'AI 규제의 역외 적용과 무역법적 쟁점',
+    venue: '한국국제경제법학회 춘계학술대회',
+    date: '2025.05',
+    type: '학회 발표',
+  },
+  {
+    title: 'EU AI Act 고위험 분류와 한국 산업에의 함의',
+    venue: 'AI 정책 대학원 콜로키움',
+    date: '2025.03',
+    type: '세미나',
+  },
+  {
+    title: '생성형 AI 시대의 공정 이용 법리 재검토',
+    venue: '정보법학회 동계 워크숍',
+    date: '2024.12',
+    type: '학회 발표',
+  },
+  {
+    title: '알고리즘 영향평가 해외 사례와 국내 도입 방안',
+    venue: '국회 AI 포럼 발제',
+    date: '2024.09',
+    type: '정책 발제',
+  },
+  {
+    title: '국가 AI 전략 비교: 혁신 촉진 vs 위험 관리',
+    venue: 'SNU AI Policy Workshop',
+    date: '2024.06',
+    type: '세미나',
+  },
 ];
 
 const career = [
@@ -212,12 +235,46 @@ export default function App() {
           </div>
         </section>
 
-        {/* ── 역량 ── */}
+        {/* ── 진행 중인 연구 ── */}
         <section className="py-16 border-b border-gray-200">
           <h2 className="font-heading text-3xl font-semibold tracking-tight mb-10">
-            연구 역량
+            진행 중인 연구
           </h2>
-          <HorizontalBar data={competencies} maxValue={100} />
+          <div className="space-y-6">
+            {ongoingResearch.map((project) => (
+              <div key={project.title} className="border-l-2 border-accent pl-5">
+                <div className="flex items-center gap-3 mb-1">
+                  <h3 className="font-heading text-lg font-semibold">{project.title}</h3>
+                  <span className="px-2 py-0.5 bg-blue-50 text-accent text-xs font-body rounded">
+                    {project.status}
+                  </span>
+                </div>
+                <p className="font-body text-xs text-muted mb-2">{project.period}</p>
+                <p className="font-body text-sm text-muted leading-relaxed">{project.desc}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* ── 발표 및 세미나 ── */}
+        <section className="py-16 border-b border-gray-200">
+          <h2 className="font-heading text-3xl font-semibold tracking-tight mb-10">
+            발표 및 세미나
+          </h2>
+          <div className="space-y-4">
+            {presentations.map((item, i) => (
+              <div key={i} className="flex gap-4 items-baseline">
+                <span className="font-body text-sm text-muted w-20 flex-shrink-0">{item.date}</span>
+                <div className="flex-1">
+                  <h3 className="font-heading text-base font-semibold leading-snug">{item.title}</h3>
+                  <p className="font-body text-sm text-muted">
+                    {item.venue}
+                    <span className="ml-2 px-1.5 py-0.5 bg-gray-100 text-xs rounded">{item.type}</span>
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
         </section>
 
         {/* ── 논문 ── */}

@@ -1,421 +1,342 @@
 import { useState } from 'react';
-import {
-  BarChart,
-  Bar,
-  RadarChart,
-  Radar,
-  PolarGrid,
-  PolarAngleAxis,
-  PolarRadiusAxis,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer
-} from 'recharts';
-import {
-  Mail,
-  BookOpen,
-  Globe,
-  Moon,
-  Sun,
-  Award,
-  ThumbsUp,
-  Users,
-  ChevronDown,
-  ChevronUp,
-  Scale,
-  Brain,
-  FileText,
-  Landmark
-} from 'lucide-react';
 
-const publicationData = [
-  { year: 2022, papers: 1, citations: 3 },
-  { year: 2023, papers: 3, citations: 12 },
-  { year: 2024, papers: 5, citations: 28 },
-  { year: 2025, papers: 4, citations: 45 },
-  { year: 2026, papers: 2, citations: 31 },
+/* ───── 순수 CSS 바 차트 컴포넌트 ───── */
+function HorizontalBar({ data, maxValue }) {
+  return (
+    <div className="space-y-3">
+      {data.map(({ label, value, color }) => (
+        <div key={label}>
+          <div className="flex justify-between text-sm font-body mb-1">
+            <span>{label}</span>
+            <span className="text-muted">{value}%</span>
+          </div>
+          <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
+            <div
+              className={`h-full rounded-full transition-all duration-700 ${color}`}
+              style={{ width: `${(value / maxValue) * 100}%` }}
+            />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/* ───── 타임라인 도트 컴포넌트 ───── */
+function TimelineDot({ active }) {
+  return (
+    <div className={`
+      w-3 h-3 rounded-full border-2 flex-shrink-0
+      ${active
+        ? 'bg-accent border-accent'
+        : 'bg-white border-gray-300'}
+    `} />
+  );
+}
+
+/* ───── 데이터 ───── */
+const researchAreas = [
+  {
+    title: 'AI 규제 비교법',
+    desc: 'EU AI Act, 한국 AI 기본법, 미국 행정명령 등 주요국 규제 프레임워크의 구조적 차이를 분석하고 국내 적용 시사점을 도출합니다.',
+  },
+  {
+    title: '알고리즘 영향평가',
+    desc: '공공부문 AI 시스템 도입 시 사전 영향평가 의무화 방안을 연구합니다. 캐나다 DAIA, 뉴질랜드 AIA 등 해외 사례를 벤치마킹합니다.',
+  },
+  {
+    title: '생성형 AI와 저작권',
+    desc: '학습 데이터의 공정 이용 해당 여부, AI 생성물의 저작물성 인정 기준 등 법리적 쟁점을 검토합니다.',
+  },
+  {
+    title: 'AI 안전 국제 거버넌스',
+    desc: 'AI Safety Summit 이후 형성 중인 다자간 규범과 국제 협력 체계를 추적하고 한국의 전략적 참여 방안을 모색합니다.',
+  },
 ];
 
-const competencyData = [
-  { subject: 'AI 기술 이해', score: 75 },
-  { subject: '법/규제 분석', score: 90 },
-  { subject: '정량 연구방법', score: 65 },
-  { subject: '정책 설계', score: 85 },
-  { subject: '국제 비교법', score: 80 },
-  { subject: '이해관계자 분석', score: 70 },
+const publications = [
+  {
+    title: 'EU AI Act 고위험 분류체계의 한국 적용 가능성 연구',
+    venue: '한국정보법학회지',
+    year: 2025,
+    type: 'journal',
+  },
+  {
+    title: '알고리즘 영향평가의 실효성 분석: 캐나다-뉴질랜드 사례를 중심으로',
+    venue: '행정논총',
+    year: 2024,
+    type: 'journal',
+  },
+  {
+    title: 'AI 생성 콘텐츠의 저작권법적 쟁점과 입법 방향',
+    venue: '법학연구',
+    year: 2024,
+    type: 'journal',
+  },
+  {
+    title: '국가 AI 전략 비교 연구: 미-중-EU-한 4개국을 중심으로',
+    venue: 'AI 정책연구',
+    year: 2023,
+    type: 'conference',
+  },
+  {
+    title: 'AI 규제 샌드박스의 국제 동향과 시사점',
+    venue: '과학기술법연구',
+    year: 2023,
+    type: 'journal',
+  },
 ];
 
-const LAMBDA_URL = ''; // Lambda URL
+const timeline = [
+  { date: '2026.01', event: '한국 AI 기본법 시행', region: 'KR', active: true },
+  { date: '2025.05', event: 'AI Action Summit (파리)', region: 'INTL', active: false },
+  { date: '2025.02', event: 'EU AI Act 전면 시행', region: 'EU', active: false },
+  { date: '2025.01', event: '한국 AI 기본법 국회 통과', region: 'KR', active: false },
+  { date: '2024.08', event: 'EU AI Act 발효', region: 'EU', active: false },
+  { date: '2024.05', event: 'AI Seoul Summit', region: 'INTL', active: false },
+  { date: '2023.11', event: 'UK AI Safety Summit (블레츨리 선언)', region: 'INTL', active: false },
+];
 
-export default function ResearcherProfile() {
-  const [darkMode, setDarkMode] = useState(false);
-  const [activeChart, setActiveChart] = useState('publications');
-  const [visitCount] = useState(0);
-  const [likeCount, setLikeCount] = useState(0);
-  const [expandedSections, setExpandedSections] = useState(new Set());
+const competencies = [
+  { label: '법/규제 분석', value: 90, color: 'bg-ink' },
+  { label: '정책 설계', value: 85, color: 'bg-ink' },
+  { label: '국제 비교법', value: 80, color: 'bg-accent' },
+  { label: 'AI 기술 이해', value: 75, color: 'bg-accent' },
+  { label: '이해관계자 분석', value: 70, color: 'bg-gray-500' },
+  { label: '정량 연구방법', value: 65, color: 'bg-gray-500' },
+];
 
-  const toggleSection = (section) => {
-    setExpandedSections(prev => {
-      const next = new Set(prev);
-      if (next.has(section)) {
-        next.delete(section);
-      } else {
-        next.add(section);
-      }
-      return next;
-    });
-  };
+const career = [
+  {
+    period: '2024 - 현재',
+    role: '석사과정 연구원',
+    org: '서울대학교 AI 정책 대학원',
+    details: 'AI 규제 비교법 세미나 수료 / 알고리즘 영향평가 연구 프로젝트 / AI 정책 브리핑 뉴스레터 발행',
+  },
+  {
+    period: '2024',
+    role: '정책 인턴',
+    org: '국회 과학기술정보방송통신위원회 AI 정책 TF',
+    details: 'AI 기본법 입법 과정 참관 / 해외 AI 규제 동향 보고서 작성 / 국회 토론회 발제 자료 준비',
+  },
+  {
+    period: '2020 - 2024',
+    role: '법학 학사',
+    org: '서울대학교 법과대학',
+    details: '정보법/기술법 세미나 우수 논문상 / 법학전문대학원 연구 조교 / 모의재판대회 AI 사건 발표',
+  },
+];
 
-  const handleLike = () => {
-    if (LAMBDA_URL) {
-      fetch(`${LAMBDA_URL}/like`, { method: 'POST' })
-        .then(res => res.json())
-        .then(data => setLikeCount(data.likes));
-    } else {
-      setLikeCount(prev => prev + 1);
-    }
-  };
+const regionStyle = {
+  KR: 'bg-blue-100 text-blue-700',
+  EU: 'bg-emerald-100 text-emerald-700',
+  INTL: 'bg-violet-100 text-violet-700',
+};
 
-  const baseTextColor = darkMode ? 'text-white' : 'text-gray-800';
-  const baseBgColor = darkMode ? 'bg-gray-900' : 'bg-gray-50';
-  const cardBgColor = darkMode ? 'bg-gray-800' : 'bg-white';
-  const subTextColor = darkMode ? 'text-gray-400' : 'text-gray-600';
+const regionLabel = { KR: '한국', EU: 'EU', INTL: '국제' };
 
-  const renderPublicationChart = () => (
-    <ResponsiveContainer width="100%" height={300}>
-      <BarChart data={publicationData}>
-        <CartesianGrid strokeDasharray="3 3" />
-        <XAxis dataKey="year" />
-        <YAxis yAxisId="left" orientation="left" />
-        <YAxis yAxisId="right" orientation="right" />
-        <Tooltip />
-        <Legend />
-        <Bar yAxisId="left" dataKey="papers" name="논문 수" fill="#6366f1" />
-        <Bar yAxisId="right" dataKey="citations" name="인용 수" fill="#10b981" />
-      </BarChart>
-    </ResponsiveContainer>
-  );
+/* ───── 메인 컴포넌트 ───── */
+export default function App() {
+  const [filter, setFilter] = useState('all');
 
-  const renderCompetencyChart = () => (
-    <ResponsiveContainer width="100%" height={300}>
-      <RadarChart data={competencyData}>
-        <PolarGrid />
-        <PolarAngleAxis dataKey="subject" tick={{ fontSize: 12 }} />
-        <PolarRadiusAxis angle={30} domain={[0, 100]} />
-        <Radar
-          name="역량"
-          dataKey="score"
-          stroke="#6366f1"
-          fill="#6366f1"
-          fillOpacity={0.3}
-        />
-        <Tooltip />
-      </RadarChart>
-    </ResponsiveContainer>
-  );
+  const filteredPubs = filter === 'all'
+    ? publications
+    : publications.filter(p => p.type === filter);
 
   return (
-    <div className={`min-h-screen ${baseBgColor} ${baseTextColor} transition-colors duration-300`}>
-      <div className="max-w-6xl mx-auto p-6">
-        {/* Stats Bar */}
-        <div className={`w-full ${cardBgColor} p-4 rounded-lg mb-8 flex justify-between items-center shadow-sm`}>
-          <div className="flex items-center space-x-8">
-            <div className="flex items-center">
-              <Users className="w-5 h-5 mr-2" />
-              <span>방문자 수: {visitCount}</span>
-            </div>
-            <div className="flex items-center">
-              <ThumbsUp className="w-5 h-5 mr-2" />
-              <span>좋아요: {likeCount}</span>
-            </div>
+    <div className="min-h-screen bg-surface">
+      {/* ── 네비게이션 ── */}
+      <nav className="sticky top-0 z-10 bg-white/80 backdrop-blur border-b border-gray-200">
+        <div className="max-w-2xl mx-auto px-6 py-4 flex justify-between items-center">
+          <span className="font-heading text-lg font-semibold tracking-tight">김정책</span>
+          <div className="flex gap-6 text-sm font-body text-muted">
+            <a href="#research" className="hover:text-ink transition-colors cursor-pointer">연구</a>
+            <a href="#publications" className="hover:text-ink transition-colors cursor-pointer">논문</a>
+            <a href="#timeline" className="hover:text-ink transition-colors cursor-pointer">정책</a>
+            <a href="#career" className="hover:text-ink transition-colors cursor-pointer">경력</a>
           </div>
-          <button
-            onClick={handleLike}
-            className="px-4 py-2 bg-indigo-500 text-white rounded-lg hover:bg-indigo-600 transition-colors flex items-center"
-          >
-            <ThumbsUp className="w-4 h-4 mr-2" />
-            좋아요
-          </button>
         </div>
+      </nav>
 
-        {/* Header */}
-        <header className="flex justify-between items-center mb-8">
-          <div>
-            <h1 className="text-4xl font-bold mb-2">김정책</h1>
-            <h2 className="text-2xl text-indigo-500">AI 정책 대학원 석사과정 연구원</h2>
-            <p className={`mt-2 ${subTextColor}`}>
-              AI 규제 프레임워크와 알고리즘 거버넌스를 연구합니다
-            </p>
+      <main className="max-w-2xl mx-auto px-6">
+        {/* ── 히어로 ── */}
+        <header className="pt-20 pb-16 border-b border-gray-200">
+          <p className="text-sm font-body text-accent tracking-widest uppercase mb-4">
+            AI Policy Researcher
+          </p>
+          <h1 className="font-heading text-5xl font-bold tracking-tight leading-tight mb-6">
+            AI가 사회에 미치는 영향을<br />
+            법과 정책으로 연구합니다
+          </h1>
+          <p className="font-body text-lg text-muted leading-relaxed max-w-xl">
+            서울대학교 AI 정책 대학원 석사과정.
+            AI 규제 프레임워크의 국제 비교와 알고리즘 거버넌스를 연구합니다.
+          </p>
+          <div className="flex gap-4 mt-8 text-sm font-body">
+            <a
+              href="mailto:researcher@aipolicy.ac.kr"
+              className="px-4 py-2 bg-ink text-white rounded hover:bg-muted transition-colors cursor-pointer"
+            >
+              Contact
+            </a>
+            <a
+              href="https://scholar.google.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="px-4 py-2 border border-gray-300 rounded hover:border-ink transition-colors cursor-pointer"
+            >
+              Google Scholar
+            </a>
           </div>
-          <button
-            onClick={() => setDarkMode(!darkMode)}
-            className={`p-2 rounded-full ${darkMode ? 'bg-yellow-400 text-gray-900' : 'bg-gray-800 text-white'}`}
-          >
-            {darkMode ? <Sun className="w-6 h-6" /> : <Moon className="w-6 h-6" />}
-          </button>
         </header>
 
-        {/* Contact */}
-        <section className="mb-8 flex flex-wrap gap-4 text-sm">
-          <a href="mailto:researcher@aipolicy.ac.kr" className="flex items-center hover:text-indigo-500 transition-colors">
-            <Mail className="w-4 h-4 mr-2" />
-            researcher@aipolicy.ac.kr
-          </a>
-          <a href="https://scholar.google.com" target="_blank" rel="noopener noreferrer" className="flex items-center hover:text-indigo-500 transition-colors">
-            <BookOpen className="w-4 h-4 mr-2" />
-            Google Scholar
-          </a>
-          <a href="https://orcid.org" target="_blank" rel="noopener noreferrer" className="flex items-center hover:text-indigo-500 transition-colors">
-            <Globe className="w-4 h-4 mr-2" />
-            ORCID
-          </a>
-        </section>
-
-        {/* Research Interests & Competency */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-          <div className={`p-6 rounded-lg ${cardBgColor} shadow-sm`}>
-            <h3 className="text-xl font-semibold mb-4 flex items-center">
-              <Brain className="w-5 h-5 mr-2" /> 연구 관심 분야
-            </h3>
-            <ul className="space-y-3">
-              {[
-                { area: 'EU AI Act와 한국 AI 기본법 비교 분석', desc: '규제 접근방식의 차이와 국내 적용 시사점' },
-                { area: '알고리즘 영향평가 제도 설계', desc: '고위험 AI 시스템의 사전 평가 프레임워크' },
-                { area: '생성형 AI 저작권 쟁점', desc: '학습 데이터 공정 이용과 생성물 권리 귀속' },
-                { area: 'AI 안전과 국제 거버넌스', desc: 'AI Safety Summit 이후 다자간 규범 형성 동향' },
-              ].map((item, i) => (
-                <li key={i}>
-                  <span className="font-medium">- {item.area}</span>
-                  <p className={`ml-3 text-sm ${subTextColor}`}>{item.desc}</p>
-                </li>
-              ))}
-            </ul>
-          </div>
-          <div className={`p-6 rounded-lg ${cardBgColor} shadow-sm`}>
-            <h3 className="text-xl font-semibold mb-4 flex items-center">
-              <Award className="w-5 h-5 mr-2" /> 연구 역량
-            </h3>
-            {renderCompetencyChart()}
-          </div>
-        </div>
-
-        {/* Charts */}
-        <div className={`p-6 rounded-lg ${cardBgColor} mb-8 shadow-sm`}>
-          <div className="flex gap-4 mb-4">
-            <button
-              onClick={() => setActiveChart('publications')}
-              className={`px-4 py-2 rounded ${activeChart === 'publications' ? 'bg-indigo-500 text-white' : 'bg-gray-200 text-gray-800'}`}
-            >
-              논문/인용 추이
-            </button>
-            <button
-              onClick={() => setActiveChart('competency')}
-              className={`px-4 py-2 rounded ${activeChart === 'competency' ? 'bg-indigo-500 text-white' : 'bg-gray-200 text-gray-800'}`}
-            >
-              역량 레이더
-            </button>
-          </div>
-          {activeChart === 'publications' && renderPublicationChart()}
-          {activeChart === 'competency' && renderCompetencyChart()}
-        </div>
-
-        {/* Publications */}
-        <section className="mb-8">
-          <h3 className="text-2xl font-semibold mb-4 flex items-center">
-            <FileText className="w-6 h-6 mr-2" /> 주요 논문
-          </h3>
-          <div className="space-y-4">
-            {[
-              {
-                title: 'EU AI Act 고위험 분류체계의 한국 적용 가능성 연구',
-                venue: '한국정보법학회지, 2025',
-                details: [
-                  'EU AI Act Annex III 고위험 분류 기준을 한국 산업 구조에 맞게 재해석',
-                  '국내 AI 활용 사례 47건에 대한 위험 등급 시뮬레이션 수행',
-                  '한국형 AI 위험 분류 프레임워크 초안 제시',
-                ],
-              },
-              {
-                title: '알고리즘 영향평가의 실효성 분석: 캐나다-뉴질랜드 사례를 중심으로',
-                venue: '행정논총, 2024',
-                details: [
-                  '캐나다 DAIA와 뉴질랜드 AIA 제도의 운영 성과 비교 분석',
-                  '영향평가 결과가 실제 정책 수정으로 이어진 비율 정량 측정',
-                  '한국 공공부문 AI 도입 시 영향평가 의무화 방안 제안',
-                ],
-              },
-              {
-                title: 'AI 생성 콘텐츠의 저작권법적 쟁점과 입법 방향',
-                venue: '법학연구, 2024',
-                details: [
-                  'Stable Diffusion, ChatGPT 등 생성형 AI 관련 해외 판례 분석',
-                  '학습 데이터의 공정 이용 해당 여부에 대한 법리 검토',
-                  'AI 생성물의 저작물성 인정 기준에 대한 입법론적 제안',
-                ],
-              },
-              {
-                title: '국가 AI 전략 비교 연구: 미-중-EU-한 4개국을 중심으로',
-                venue: 'AI 정책연구, 2023',
-                details: [
-                  '4개국의 AI 국가 전략 문서 체계적 비교 분석',
-                  '혁신 촉진과 위험 관리 사이의 정책 균형점 도출',
-                  '한국 AI 전략의 차별성과 보완점 제시',
-                ],
-              },
-            ].map((pub, index) => (
-              <div key={index} className={`p-4 rounded-lg ${cardBgColor} shadow-sm transition-all duration-300`}>
-                <div
-                  className="flex justify-between items-center cursor-pointer"
-                  onClick={() => toggleSection(`pub-${index}`)}
-                >
-                  <div>
-                    <h4 className="text-lg font-semibold">{pub.title}</h4>
-                    <p className={`text-sm ${subTextColor}`}>{pub.venue}</p>
-                  </div>
-                  {expandedSections.has(`pub-${index}`) ? (
-                    <ChevronUp className="w-6 h-6 flex-shrink-0" />
-                  ) : (
-                    <ChevronDown className="w-6 h-6 flex-shrink-0" />
-                  )}
-                </div>
-                {expandedSections.has(`pub-${index}`) && (
-                  <ul className={`list-disc list-inside mt-4 ${subTextColor}`}>
-                    {pub.details.map((detail, i) => (
-                      <li key={i} className="mt-2">{detail}</li>
-                    ))}
-                  </ul>
-                )}
-              </div>
+        {/* ── 연구 분야 ── */}
+        <section id="research" className="py-16 border-b border-gray-200">
+          <h2 className="font-heading text-3xl font-semibold tracking-tight mb-10">
+            연구 분야
+          </h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+            {researchAreas.map((area) => (
+              <article
+                key={area.title}
+                className="group p-6 border border-gray-200 rounded-lg hover:border-ink transition-colors cursor-default"
+              >
+                <h3 className="font-heading text-xl font-semibold mb-3 group-hover:text-accent transition-colors">
+                  {area.title}
+                </h3>
+                <p className="font-body text-sm text-muted leading-relaxed">
+                  {area.desc}
+                </p>
+              </article>
             ))}
           </div>
         </section>
 
-        {/* Policy Timeline */}
-        <section className="mb-8">
-          <h3 className="text-2xl font-semibold mb-4 flex items-center">
-            <Landmark className="w-6 h-6 mr-2" /> AI 정책 타임라인
-          </h3>
-          <div className={`p-6 rounded-lg ${cardBgColor} shadow-sm`}>
-            <div className="relative border-l-2 border-indigo-300 ml-4">
+        {/* ── 역량 ── */}
+        <section className="py-16 border-b border-gray-200">
+          <h2 className="font-heading text-3xl font-semibold tracking-tight mb-10">
+            연구 역량
+          </h2>
+          <HorizontalBar data={competencies} maxValue={100} />
+        </section>
+
+        {/* ── 논문 ── */}
+        <section id="publications" className="py-16 border-b border-gray-200">
+          <div className="flex items-end justify-between mb-10">
+            <h2 className="font-heading text-3xl font-semibold tracking-tight">
+              논문
+            </h2>
+            <div className="flex gap-2 text-sm font-body">
               {[
-                { date: '2023.11', event: 'UK AI Safety Summit (블레츨리 선언)', tag: '국제' },
-                { date: '2024.05', event: 'AI Seoul Summit (AI 서울 정상회의)', tag: '국제' },
-                { date: '2024.08', event: 'EU AI Act 발효', tag: 'EU' },
-                { date: '2025.01', event: '한국 AI 기본법 국회 통과', tag: '한국' },
-                { date: '2025.02', event: 'EU AI Act 전면 시행', tag: 'EU' },
-                { date: '2025.05', event: 'AI Action Summit (파리)', tag: '국제' },
-                { date: '2026.01', event: '한국 AI 기본법 시행', tag: '한국' },
-              ].map((item, i) => (
-                <div key={i} className="mb-6 ml-6">
-                  <div className="absolute -left-2 w-4 h-4 bg-indigo-500 rounded-full" style={{ marginTop: '4px' }} />
-                  <div className="flex items-center gap-2">
-                    <span className="font-bold text-indigo-500">{item.date}</span>
-                    <span className={`px-2 py-0.5 rounded-full text-xs ${
-                      item.tag === '한국' ? 'bg-blue-100 text-blue-800' :
-                      item.tag === 'EU' ? 'bg-green-100 text-green-800' :
-                      'bg-purple-100 text-purple-800'
-                    }`}>
-                      {item.tag}
-                    </span>
-                  </div>
-                  <p className={`${subTextColor}`}>{item.event}</p>
-                </div>
+                { key: 'all', label: '전체' },
+                { key: 'journal', label: '학술지' },
+                { key: 'conference', label: '학회' },
+              ].map(({ key, label }) => (
+                <button
+                  key={key}
+                  onClick={() => setFilter(key)}
+                  className={`px-3 py-1 rounded cursor-pointer transition-colors ${
+                    filter === key
+                      ? 'bg-ink text-white'
+                      : 'text-muted hover:text-ink'
+                  }`}
+                >
+                  {label}
+                </button>
               ))}
             </div>
           </div>
+          <ol className="space-y-6">
+            {filteredPubs.map((pub, i) => (
+              <li key={i} className="group">
+                <div className="flex gap-4">
+                  <span className="font-heading text-3xl font-bold text-gray-200 group-hover:text-accent transition-colors leading-none select-none">
+                    {String(i + 1).padStart(2, '0')}
+                  </span>
+                  <div>
+                    <h3 className="font-heading text-lg font-semibold leading-snug mb-1">
+                      {pub.title}
+                    </h3>
+                    <p className="font-body text-sm text-muted">
+                      {pub.venue}, {pub.year}
+                    </p>
+                  </div>
+                </div>
+              </li>
+            ))}
+          </ol>
         </section>
 
-        {/* Education & Experience */}
-        <section className="mb-8">
-          <h3 className="text-2xl font-semibold mb-4">학력 및 경력</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {[
-              {
-                title: 'AI 정책 대학원 석사과정',
-                description: '서울대학교 AI 정책 이니셔티브 | 2024 - 현재',
-                achievements: [
-                  'AI 규제 비교법 세미나 수료',
-                  '알고리즘 영향평가 연구 프로젝트 참여',
-                  'AI 정책 브리핑 뉴스레터 발행',
-                ],
-              },
-              {
-                title: '법학과 학부',
-                description: '서울대학교 법과대학 | 2020 - 2024',
-                achievements: [
-                  '정보법/기술법 세미나 우수 논문상',
-                  '법학전문대학원 학부 연구 조교',
-                  '모의재판대회 AI 관련 사건 발표',
-                ],
-              },
-              {
-                title: '국회 AI 정책 TF 인턴',
-                description: '국회 과학기술정보방송통신위원회 | 2024',
-                achievements: [
-                  'AI 기본법 입법 과정 현장 참관 및 자료 조사',
-                  '해외 AI 규제 동향 보고서 작성',
-                  '국회 토론회 발제 자료 준비',
-                ],
-              },
-              {
-                title: 'AI 윤리 워크숍 참여',
-                description: 'UNESCO AI 윤리 권고안 국내 이행 검토 | 2025',
-                achievements: [
-                  'UNESCO AI 윤리 권고안과 국내 법제 정합성 분석',
-                  '시민사회-산업계 이해관계자 인터뷰 수행',
-                  '정책 브리프 공동 집필',
-                ],
-              },
-            ].map((item, index) => (
-              <div key={index} className={`p-4 rounded-lg ${cardBgColor} shadow-sm transition-all duration-300`}>
-                <div
-                  className="flex justify-between items-center cursor-pointer"
-                  onClick={() => toggleSection(`edu-${index}`)}
-                >
-                  <div>
-                    <h4 className="text-xl font-semibold">{item.title}</h4>
-                    <p className={subTextColor}>{item.description}</p>
-                  </div>
-                  {expandedSections.has(`edu-${index}`) ? (
-                    <ChevronUp className="w-6 h-6 flex-shrink-0" />
-                  ) : (
-                    <ChevronDown className="w-6 h-6 flex-shrink-0" />
+        {/* ── 정책 타임라인 ── */}
+        <section id="timeline" className="py-16 border-b border-gray-200">
+          <h2 className="font-heading text-3xl font-semibold tracking-tight mb-10">
+            AI 정책 타임라인
+          </h2>
+          <div className="space-y-0">
+            {timeline.map((item, i) => (
+              <div key={i} className="flex gap-4 items-start group">
+                <div className="flex flex-col items-center">
+                  <TimelineDot active={item.active} />
+                  {i < timeline.length - 1 && (
+                    <div className="w-px h-12 bg-gray-200" />
                   )}
                 </div>
-                {expandedSections.has(`edu-${index}`) && (
-                  <ul className={`list-disc list-inside mt-4 ${subTextColor}`}>
-                    {item.achievements.map((achievement, i) => (
-                      <li key={i} className="mt-2">{achievement}</li>
-                    ))}
-                  </ul>
-                )}
+                <div className="pb-8">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="font-body text-sm font-bold text-ink">{item.date}</span>
+                    <span className={`px-2 py-0.5 rounded text-xs font-body ${regionStyle[item.region]}`}>
+                      {regionLabel[item.region]}
+                    </span>
+                  </div>
+                  <p className={`font-body text-sm ${item.active ? 'text-ink font-bold' : 'text-muted'}`}>
+                    {item.event}
+                  </p>
+                </div>
               </div>
             ))}
           </div>
         </section>
 
-        {/* Skills */}
-        <section className="mb-8">
-          <h3 className="text-2xl font-semibold mb-4 flex items-center">
-            <Scale className="w-6 h-6 mr-2" /> 전문 역량
-          </h3>
+        {/* ── 경력 ── */}
+        <section id="career" className="py-16 border-b border-gray-200">
+          <h2 className="font-heading text-3xl font-semibold tracking-tight mb-10">
+            학력 및 경력
+          </h2>
+          <div className="space-y-8">
+            {career.map((item, i) => (
+              <div key={i} className="flex gap-6">
+                <span className="font-body text-sm text-muted w-28 flex-shrink-0 pt-1">
+                  {item.period}
+                </span>
+                <div>
+                  <h3 className="font-heading text-lg font-semibold">{item.role}</h3>
+                  <p className="font-body text-sm text-accent mb-2">{item.org}</p>
+                  <p className="font-body text-sm text-muted leading-relaxed">{item.details}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* ── 전문 역량 태그 ── */}
+        <section className="py-16 border-b border-gray-200">
+          <h2 className="font-heading text-3xl font-semibold tracking-tight mb-10">
+            전문 분야
+          </h2>
           <div className="flex flex-wrap gap-2">
             {[
-              { skill: 'AI 규제 분석', color: 'bg-indigo-200 text-indigo-800' },
-              { skill: '비교법 연구', color: 'bg-blue-200 text-blue-800' },
-              { skill: '정책 영향평가', color: 'bg-green-200 text-green-800' },
-              { skill: '이해관계자 분석', color: 'bg-yellow-200 text-yellow-800' },
-              { skill: 'Python/데이터 분석', color: 'bg-red-200 text-red-800' },
-              { skill: '법률 문서 작성', color: 'bg-purple-200 text-purple-800' },
-              { skill: 'NLP/텍스트 마이닝', color: 'bg-teal-200 text-teal-800' },
-              { skill: '영어/불어', color: 'bg-orange-200 text-orange-800' },
-            ].map(({ skill, color }) => (
+              'AI 규제 분석',
+              '비교법 연구',
+              '정책 영향평가',
+              '이해관계자 분석',
+              'Python / 데이터 분석',
+              '법률 문서 작성',
+              'NLP / 텍스트 마이닝',
+              '영어 / 불어',
+            ].map((skill) => (
               <span
                 key={skill}
-                className={`px-3 py-1 rounded-full text-sm ${color} transition-colors duration-300 hover:bg-opacity-80 cursor-default`}
+                className="px-3 py-1.5 border border-gray-300 rounded-full text-sm font-body text-muted hover:border-ink hover:text-ink transition-colors cursor-default"
               >
                 {skill}
               </span>
@@ -423,12 +344,14 @@ export default function ResearcherProfile() {
           </div>
         </section>
 
-        {/* Footer */}
-        <footer className={`text-center py-6 ${subTextColor} text-sm border-t ${darkMode ? 'border-gray-700' : 'border-gray-200'}`}>
-          <p>React + Tailwind CSS + Recharts로 제작</p>
-          <p className="mt-1">AWS 배포 실습: S3 정적 호스팅 + CloudFront + Lambda(방문자/좋아요) + DynamoDB</p>
+        {/* ── 푸터 ── */}
+        <footer className="py-12 text-center font-body text-sm text-muted">
+          <p>React + Tailwind CSS로 제작</p>
+          <p className="mt-1">
+            AWS 배포: S3 + CloudFront + Lambda + DynamoDB
+          </p>
         </footer>
-      </div>
+      </main>
     </div>
   );
 }

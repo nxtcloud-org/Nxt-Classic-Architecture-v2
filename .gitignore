@@ -5,6 +5,10 @@
 **/.DS_Store
 **/._.DS_Store
 
+# Python
+__pycache__/
+*.pyc
+
 # Logs
 logs
 *.log

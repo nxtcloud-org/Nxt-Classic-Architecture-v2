@@ -1,0 +1,15 @@
+{
+  "short_name": "Researcher Profile",
+  "name": "AI Policy Researcher Profile",
+  "icons": [
+    {
+      "src": "favicon.ico",
+      "sizes": "64x64 32x32 24x24 16x16",
+      "type": "image/x-icon"
+    }
+  ],
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#1e3a5f",
+  "background_color": "#ffffff"
+}
